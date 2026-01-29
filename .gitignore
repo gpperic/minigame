@@ -16,6 +16,7 @@ node_modules/
 # Firebase
 .firebase/
 firebase-debug.log
+minigame-eb7a7-firebase-adminsdk-fbsvc-2a56a6349b.json
 
 # Misc
 .cache/
