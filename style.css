@@ -1,17 +1,15 @@
 @charset "UTF-8";
-/* 1. 픽셀 폰트 (구글 폰트 import) */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-/* --- [공통] 레트로 테마 변수 설정 --- */
+/* --- [1. 공통 변수] --- */
 :root {
     --retro-bg: #000000;
-    --retro-text: #33ff00;   /* 기본 형광 초록 */
-    --retro-accent: #ff00ff; /* 포인트 마젠타 */
+    --retro-text: #33ff00;
+    --retro-accent: #ff00ff;
     --retro-border: 4px;
-    --cell-size: 35px;       /* 지뢰찾기 칸 크기 */
+    --cell-size: 35px;
 }
 
-/* --- [공통] 기본 스타일 --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -24,60 +22,43 @@ body {
     overflow-x: hidden;
 }
 
-/* CRT 모니터 스캔라인 효과 */
 body::before {
-    content: "";
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 2px);
     pointer-events: none; z-index: 9999;
 }
 
-/* 헤더 & 푸터 & 링크 */
+a { text-decoration: none; color: inherit; }
+
+/* --- [2. 헤더 & 푸터] --- */
 header {
     border-bottom: var(--retro-border) solid var(--retro-text);
-    padding: 2rem 1rem;
-    text-align: center;
+    padding: 2rem 1rem; text-align: center;
     box-shadow: 0px 5px 0px var(--retro-accent);
 }
 header h1 {
-    font-size: 2rem; margin-bottom: 1rem;
-    color: var(--retro-accent);
+    font-size: 2rem; margin-bottom: 1rem; color: var(--retro-accent);
     text-shadow: 3px 3px 0px #fff, 5px 5px 0px rgba(0,0,0,0.5);
 }
 header p { font-size: 0.8rem; }
+footer { text-align: center; padding: 30px; margin-top: 50px; font-size: 0.6rem; color: #555; }
 
-footer {
-    text-align: center; padding: 30px; margin-top: 50px;
-    font-size: 0.6rem; color: #555;
-}
-
-a { text-decoration: none; color: inherit; }
-
-/* --- [index.html] 게임 카드 스타일 --- */
+/* --- [3. 메인 카드 그리드] --- */
 main { max-width: 900px; margin: 50px auto; padding: 0 20px; }
 .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
-
 .game-card {
-    display: block;
-    border: var(--retro-border) solid var(--retro-text);
-    background-color: #111;
-    box-shadow: 5px 5px 0px var(--retro-accent);
-    transition: all 0.1s;
-    padding: 5px;
+    display: block; border: var(--retro-border) solid var(--retro-text);
+    background-color: #111; box-shadow: 5px 5px 0px var(--retro-accent);
+    transition: all 0.1s; padding: 5px;
 }
 .game-card:hover {
-    background-color: var(--retro-accent);
-    color: var(--retro-bg);
-    border-color: var(--retro-accent);
-    box-shadow: -5px -5px 0px var(--retro-text);
+    background-color: var(--retro-accent); color: var(--retro-bg);
+    border-color: var(--retro-accent); box-shadow: -5px -5px 0px var(--retro-text);
     transform: translate(5px, 5px);
 }
-/* 카드 아이콘 등 세부 스타일 */
 .card-icon {
     height: 120px; display: flex; align-items: center; justify-content: center;
-    font-size: 3rem; border-bottom: 2px dashed var(--retro-text);
-    background-color: #000;
+    font-size: 3rem; border-bottom: 2px dashed var(--retro-text); background-color: #000;
 }
 .game-card:hover .card-icon { background-color: var(--retro-accent); color: var(--retro-bg); border-color: var(--retro-bg); }
 .card-content { padding: 20px; }
@@ -90,47 +71,84 @@ main { max-width: 900px; margin: 50px auto; padding: 0 20px; }
     font-size: 0.6rem; border: 2px solid var(--retro-text); margin-right: 5px;
 }
 .game-card:hover .tag { background-color: var(--retro-bg); color: var(--retro-text); }
-/* 준비중 카드 */
 .game-card.disabled { opacity: 0.5; cursor: default; box-shadow: none; border-color: #555; color: #555; }
 .game-card.disabled:hover { background-color: #111; color: #555; border-color: #555; box-shadow: none; transform: none; }
 
-
-/* --- [minesweeper.html] 지뢰찾기 전용 스타일 --- */
+/* --- [4. 게임 페이지 공통] --- */
 .game-body {
-    display: flex; flex-direction: column; align-items: center; margin-top: 30px;
+    display: flex; flex-direction: column; align-items: center; margin-top: 20px;
+    padding-bottom: 50px; touch-action: manipulation;
 }
-.status { margin-bottom: 30px; font-size: 0.8rem; text-align: center; line-height: 1.5; min-height: 1.2rem; }
+.game-body h1 {
+    color: var(--retro-accent); margin-bottom: 20px; font-size: 1.2rem;
+    text-shadow: 3px 3px 0px #fff, 5px 5px 0px rgba(0,0,0,0.5); text-align: center;
+}
 
+/* 모바일 컨트롤 버튼 */
+.controls-area {
+    display: flex; gap: 10px; margin-bottom: 20px;
+    width: 100%; justify-content: center; max-width: 400px;
+}
+.mode-btn {
+    flex: 1; padding: 15px 10px; text-align: center;
+    border: var(--retro-border) solid var(--retro-text);
+    background-color: var(--retro-bg); color: #555;
+    cursor: pointer; font-size: 0.7rem; transition: all 0.1s;
+}
+.mode-btn.active {
+    background-color: var(--retro-text); color: var(--retro-bg);
+    box-shadow: 0 0 10px var(--retro-text);
+}
+.mode-btn:active { transform: scale(0.95); }
+
+/* ✨ [신규] 정보 패널 (남은 지뢰 표시용) */
+.info-panel {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; max-width: 360px; /* 게임판 너비와 비슷하게 */
+    margin-bottom: 10px; padding: 0 10px;
+    font-size: 0.8rem;
+}
+.mine-count { color: var(--retro-accent); }
+
+.status { margin-bottom: 20px; font-size: 0.7rem; text-align: center; min-height: 1.5rem; line-height: 1.5; }
+
+/* 게임판 디자인 */
 #game-board {
     display: grid;
     grid-template-columns: repeat(10, var(--cell-size));
-    gap: 2px;
+    gap: 0px;
     background-color: var(--retro-text);
-    padding: 5px;
+    padding: 4px;
     border: var(--retro-border) solid var(--retro-text);
     box-shadow: 5px 5px 0px var(--retro-accent);
 }
 
 .cell {
     width: var(--cell-size); height: var(--cell-size);
-    background-color: #111;
+    background-color: #333;
     display: flex; align-items: center; justify-content: center;
     font-weight: bold; cursor: pointer; user-select: none;
-    font-size: 12px; border: 2px solid #333;
+    font-size: 12px; border: 3px outset #555;
 }
-.cell:hover { background-color: #222; }
-.cell.revealed { background-color: #000; border-color: #111; color: var(--retro-text); }
-.cell.pressed { background-color: var(--retro-text) !important; color: var(--retro-bg) !important; box-shadow: inset 2px 2px 0px rgba(0,0,0,0.5); }
-.cell.mine { background-color: var(--retro-accent) !important; color: #fff !important; }
-.cell.flag { color: var(--retro-accent); }
+.cell:hover { background-color: #444; }
 
-/* 지뢰찾기 숫자 색상 */
+.cell.revealed {
+    background-color: #000; border: 1px solid #111;
+    color: var(--retro-text);
+}
+.cell.pressed {
+    background-color: var(--retro-text) !important;
+    color: var(--retro-bg) !important;
+    border: 1px solid var(--retro-text) !important;
+}
+.cell.mine { background-color: var(--retro-accent) !important; color: #fff !important; border: 1px solid var(--retro-accent); }
+.cell.flag { color: var(--retro-accent); text-shadow: 1px 1px 0 #000; }
+
 .num-1 { color: #00ffff !important; }
 .num-2 { color: #ffff00 !important; }
 .num-3 { color: #ff0000 !important; }
 .num-4 { color: #ff00ff !important; }
 
-/* 게임 버튼 */
 .game-btn {
     margin-top: 30px; padding: 15px 30px;
     font-family: 'Press Start 2P', cursive; font-size: 12px;
@@ -144,5 +162,24 @@ main { max-width: 900px; margin: 50px auto; padding: 0 20px; }
     border-color: var(--retro-accent); box-shadow: -3px -3px 0px var(--retro-text);
     transform: translate(3px, 3px);
 }
-.back-link { margin-top: 20px; font-size: 0.7rem; color: #555; }
+.back-link { margin-top: 20px; font-size: 0.7rem; color: #555; text-decoration: none; }
 .back-link:hover { color: var(--retro-text); text-decoration: underline; }
+
+@keyframes blinker { 50% { opacity: 0; } }
+.blink-text, .blink {
+    animation: blinker 0.8s linear infinite;
+    color: var(--retro-accent) !important;
+    text-shadow: 0 0 10px var(--retro-accent);
+}
+.body-404 { justify-content: center; height: 100vh; margin-top: 0; overflow: hidden; }
+.error-code { font-size: 5rem; color: var(--retro-accent); text-shadow: 4px 4px 0px #fff; margin-bottom: 20px; position: relative; }
+.error-msg { font-size: 1rem; line-height: 2; text-align: center; margin-bottom: 40px; color: var(--retro-text); }
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+.glitch-effect { animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite; }
