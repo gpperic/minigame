@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <rect width="16" height="16" fill="#000000" />
+  
+  <path fill="#33ff00" d="
+    M7 14 h2 v2 h-2 z
+    M7 11 h2 v2 h-2 z
+    M4 11 h2 v2 h-2 z
+    M10 11 h2 v2 h-2 z
+    M7 8 h2 v2 h-2 z
+    M5 8 h2 v2 h-2 z
+    M9 8 h2 v2 h-2 z
+    M7 5 h2 v2 h-2 z
+    M6 5 h1 v2 h-1 z
+    M9 5 h1 v2 h-1 z
+    M7 2 h2 v2 h-2 z
+  "/>
+</svg>
