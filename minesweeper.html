@@ -13,31 +13,33 @@
             width: 100%; justify-content: center;
         }
 
-        /* 모드 전환 버튼 (토글 스타일) */
         .mode-btn {
             flex: 1; max-width: 150px; padding: 10px;
             text-align: center;
             border: var(--retro-border) solid var(--retro-text);
             background-color: var(--retro-bg);
-            color: #555; /* 비활성 상태 */
+            color: #555;
             cursor: pointer;
-            font-size: 0.7rem;
-            font-family: 'Press Start 2P', cursive;
+            font-size: 0.7rem; font-family: 'Press Start 2P', cursive;
             transition: all 0.1s;
         }
         
-        /* 활성화된 모드 버튼 */
         .mode-btn.active {
-            background-color: var(--retro-text);
-            color: var(--retro-bg);
-            box-shadow: 0 0 10px var(--retro-text);
-            border-color: var(--retro-text);
+            background-color: var(--retro-text); color: var(--retro-bg);
+            box-shadow: 0 0 10px var(--retro-text); border-color: var(--retro-text);
         }
-
         .mode-btn:active { transform: scale(0.95); }
-
-        /* 모바일에서 더블탭 확대 방지 */
         body { touch-action: manipulation; }
+
+        /* ✨ 추가된 스타일: 깜빡이는 텍스트 애니메이션 ✨ */
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+        .blink-text {
+            animation: blinker 0.8s linear infinite;
+            color: var(--retro-accent) !important; /* 마젠타색으로 강조 */
+            text-shadow: 0 0 10px var(--retro-accent); /* 빛나는 효과 추가 */
+        }
     </style>
 </head>
 <body class="game-body">
@@ -61,7 +63,7 @@
         const MINE_COUNT = 15;
         let board = [];
         let gameOver = false;
-        let currentMode = 'dig'; // 현재 모드: 'dig' (파기) 또는 'flag' (깃발)
+        let currentMode = 'dig';
 
         const boardElement = document.getElementById('game-board');
         const statusElement = document.getElementById('status');
@@ -71,11 +73,9 @@
         function setMode(mode) {
             currentMode = mode;
             if (mode === 'dig') {
-                btnDig.classList.add('active');
-                btnFlag.classList.remove('active');
+                btnDig.classList.add('active'); btnFlag.classList.remove('active');
             } else {
-                btnDig.classList.remove('active');
-                btnFlag.classList.add('active');
+                btnDig.classList.remove('active'); btnFlag.classList.add('active');
             }
         }
 
@@ -85,7 +85,9 @@
             boardElement.innerHTML = '';
             statusElement.innerText = "AVOID MINES! GOOD LUCK.";
             statusElement.style.color = "var(--retro-text)";
-            setMode('dig'); // 게임 시작 시 파기 모드로 초기화
+            // ✨ 재시작 시 깜빡임 효과 제거
+            statusElement.classList.remove('blink-text'); 
+            setMode('dig');
 
             for (let i = 0; i < BOARD_SIZE; i++) {
                 let row = [];
@@ -119,8 +121,7 @@
             let count = 0;
             for (let i = -1; i <= 1; i++) {
                 for (let j = -1; j <= 1; j++) {
-                    let nr = r + i;
-                    let nc = c + j;
+                    let nr = r + i; let nc = c + j;
                     if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
                         if (board[nr][nc].isMine) count++;
                     }
@@ -137,16 +138,10 @@
                     cell.className = 'cell';
                     cell.id = `cell-${r}-${c}`;
                     
-                    // 통합 클릭 핸들러 (모바일/PC 공용)
                     cell.addEventListener('click', () => handleUnifiedClick(r, c));
-                    
-                    // PC용 우클릭 (깃발)
                     cell.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                        handleRightClick(r, c);
+                        e.preventDefault(); handleRightClick(r, c);
                     });
-
-                    // PC용 누름 효과
                     cell.addEventListener('mousedown', () => highlightNeighbors(r, c, true));
                     cell.addEventListener('mouseup', () => highlightNeighbors(r, c, false));
                     cell.addEventListener('mouseleave', () => highlightNeighbors(r, c, false));
@@ -154,8 +149,7 @@
                     if (board[r][c].revealed) {
                         cell.classList.add('revealed');
                         if (board[r][c].isMine) {
-                            cell.classList.add('mine');
-                            cell.innerText = '💣';
+                            cell.classList.add('mine'); cell.innerText = '💣';
                         } else if (board[r][c].count > 0) {
                             cell.innerText = board[r][c].count;
                             if(board[r][c].count === 1) cell.classList.add('num-1');
@@ -163,40 +157,24 @@
                             else if(board[r][c].count >= 3) cell.classList.add('num-3');
                         }
                     } else if (board[r][c].flagged) {
-                        cell.classList.add('flag');
-                        cell.innerText = '🚩';
+                        cell.classList.add('flag'); cell.innerText = '🚩';
                     }
                     boardElement.appendChild(cell);
                 }
             }
         }
 
-        // 통합 클릭 로직 (가장 중요!)
         function handleUnifiedClick(r, c) {
             if (gameOver) return;
-
-            // 1. 이미 열린 칸을 클릭했을 때 (주변 한방에 열기 기능)
             if (board[r][c].revealed) {
-                if (board[r][c].count > 0) {
-                    chordReveal(r, c); // 주변 지뢰 개수만큼 깃발이 있으면 나머지 오픈
-                }
+                if (board[r][c].count > 0) chordReveal(r, c);
                 return;
             }
-
-            // 2. 깃발 모드일 때
-            if (currentMode === 'flag') {
-                toggleFlag(r, c);
-                return;
-            }
-
-            // 3. 깃발이 꽂혀있으면 클릭 방지
+            if (currentMode === 'flag') { toggleFlag(r, c); return; }
             if (board[r][c].flagged) return;
-
-            // 4. 일반 열기 (Dig 모드)
             revealCell(r, c);
         }
 
-        // PC 우클릭 전용
         function handleRightClick(r, c) {
             if (gameOver || board[r][c].revealed) return;
             toggleFlag(r, c);
@@ -208,121 +186,4 @@
             renderBoard();
         }
 
-        function revealCell(r, c) {
-            if (board[r][c].revealed || board[r][c].flagged) return;
-
-            board[r][c].revealed = true;
-
-            if (board[r][c].isMine) {
-                gameOver = true;
-                statusElement.innerText = "GAME OVER! TRY AGAIN.";
-                statusElement.style.color = "var(--retro-accent)";
-                revealAllMines();
-            } else {
-                if (board[r][c].count === 0) expandEmptyCells(r, c);
-                checkWin();
-            }
-            renderBoard();
-        }
-
-        // 스마트 터치 (Chording): 숫자 주변의 깃발 개수가 맞으면 나머지 자동 오픈
-        function chordReveal(r, c) {
-            let flagCount = 0;
-            // 주변 깃발 개수 세기
-            for (let i = -1; i <= 1; i++) {
-                for (let j = -1; j <= 1; j++) {
-                    let nr = r + i; let nc = c + j;
-                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-                        if (board[nr][nc].flagged) flagCount++;
-                    }
-                }
-            }
-
-            // 주변 깃발 개수가 현재 칸의 숫자와 같다면
-            if (flagCount === board[r][c].count) {
-                let hitMine = false;
-                // 주변 닫힌 칸 모두 열기
-                for (let i = -1; i <= 1; i++) {
-                    for (let j = -1; j <= 1; j++) {
-                        let nr = r + i; let nc = c + j;
-                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-                            if (!board[nr][nc].revealed && !board[nr][nc].flagged) {
-                                if (board[nr][nc].isMine) hitMine = true; // 깃발 잘못 꽂고 열었을 때
-                                revealCell(nr, nc); 
-                            }
-                        }
-                    }
-                }
-                // 잘못된 깃발로 인해 지뢰가 터진 경우 처리
-                if (hitMine) {
-                    gameOver = true;
-                    statusElement.innerText = "GAME OVER! WRONG FLAG.";
-                    statusElement.style.color = "var(--retro-accent)";
-                    revealAllMines();
-                    renderBoard();
-                }
-            } else {
-                // 깃발 개수가 부족하면 살짝 껌뻑이는 효과 (피드백)
-                highlightNeighbors(r, c, true);
-                setTimeout(() => highlightNeighbors(r, c, false), 150);
-            }
-        }
-
-        function highlightNeighbors(r, c, isActive) {
-            if (gameOver) return;
-            for (let i = -1; i <= 1; i++) {
-                for (let j = -1; j <= 1; j++) {
-                    if (i === 0 && j === 0) continue;
-                    let nr = r + i; let nc = c + j;
-                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-                        if (!board[nr][nc].revealed && !board[nr][nc].flagged) {
-                            const neighborCell = document.getElementById(`cell-${nr}-${nc}`);
-                            if (neighborCell) {
-                                isActive ? neighborCell.classList.add('pressed') : neighborCell.classList.remove('pressed');
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        function expandEmptyCells(r, c) {
-            for (let i = -1; i <= 1; i++) {
-                for (let j = -1; j <= 1; j++) {
-                    let nr = r + i; let nc = c + j;
-                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-                        if (!board[nr][nc].revealed && !board[nr][nc].isMine) {
-                            revealCell(nr, nc);
-                        }
-                    }
-                }
-            }
-        }
-
-        function revealAllMines() {
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (board[r][c].isMine) board[r][c].revealed = true;
-                }
-            }
-        }
-
-        function checkWin() {
-            if (gameOver) return;
-            let unrevealedSafeCells = 0;
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (!board[r][c].isMine && !board[r][c].revealed) unrevealedSafeCells++;
-                }
-            }
-            if (unrevealedSafeCells === 0) {
-                gameOver = true;
-                statusElement.innerText = "MISSION CLEAR! 🎉";
-                statusElement.style.color = "var(--retro-text)";
-            }
-        }
-
-        initGame();
-    </script>
-</body>
-</html>
+        function reveal
