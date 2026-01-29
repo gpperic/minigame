@@ -5,42 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>8-BIT Minesweeper</title>
     <link rel="stylesheet" href="style.css">
-    
-    <style>
-        /* 모바일 전용 추가 스타일 */
-        .controls-area {
-            display: flex; gap: 10px; margin-bottom: 20px;
-            width: 100%; justify-content: center;
-        }
-
-        .mode-btn {
-            flex: 1; max-width: 150px; padding: 10px;
-            text-align: center;
-            border: var(--retro-border) solid var(--retro-text);
-            background-color: var(--retro-bg);
-            color: #555;
-            cursor: pointer;
-            font-size: 0.7rem; font-family: 'Press Start 2P', cursive;
-            transition: all 0.1s;
-        }
-        
-        .mode-btn.active {
-            background-color: var(--retro-text); color: var(--retro-bg);
-            box-shadow: 0 0 10px var(--retro-text); border-color: var(--retro-text);
-        }
-        .mode-btn:active { transform: scale(0.95); }
-        body { touch-action: manipulation; }
-
-        /* ✨ 추가된 스타일: 깜빡이는 텍스트 애니메이션 ✨ */
-        @keyframes blinker {
-            50% { opacity: 0; }
-        }
-        .blink-text {
-            animation: blinker 0.8s linear infinite;
-            color: var(--retro-accent) !important; /* 마젠타색으로 강조 */
-            text-shadow: 0 0 10px var(--retro-accent); /* 빛나는 효과 추가 */
-        }
-    </style>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body class="game-body">
 
@@ -51,6 +16,10 @@
         <div id="btn-flag" class="mode-btn" onclick="setMode('flag')">FLAG 🚩</div>
     </div>
 
+    <div class="info-panel">
+        <div class="mine-count">MINES: <span id="mine-counter">00</span></div>
+        </div>
+
     <div class="status" id="status">AVOID MINES! GOOD LUCK.</div>
     
     <div id="game-board"></div>
@@ -58,19 +27,25 @@
     <button class="game-btn" onclick="initGame()">RESTART GAME</button>
     <a href="index.html" class="back-link"><< BACK TO MAIN</a>
 
-    <script>
+    <script type="module">
+        import { analytics, logEvent } from './firebase-config.js';
+
+        // --- 전역 변수 ---
         const BOARD_SIZE = 10;
         const MINE_COUNT = 15;
         let board = [];
         let gameOver = false;
         let currentMode = 'dig';
+        let flagsPlaced = 0; // ✨ 깃발 개수 추적용 변수
 
+        // --- DOM 요소 ---
         const boardElement = document.getElementById('game-board');
         const statusElement = document.getElementById('status');
         const btnDig = document.getElementById('btn-dig');
         const btnFlag = document.getElementById('btn-flag');
+        const mineCounterElement = document.getElementById('mine-counter'); // ✨ 카운터 요소
 
-        function setMode(mode) {
+        window.setMode = function(mode) {
             currentMode = mode;
             if (mode === 'dig') {
                 btnDig.classList.add('active'); btnFlag.classList.remove('active');
@@ -79,16 +54,28 @@
             }
         }
 
-        function initGame() {
+        window.initGame = function() {
+            console.log("Game Initializing...");
+
+            // 초기화
             board = [];
             gameOver = false;
+            flagsPlaced = 0; // 깃발 개수 0으로 리셋
+            updateMineCounter(); // 카운터 화면 갱신
+
             boardElement.innerHTML = '';
             statusElement.innerText = "AVOID MINES! GOOD LUCK.";
             statusElement.style.color = "var(--retro-text)";
-            // ✨ 재시작 시 깜빡임 효과 제거
             statusElement.classList.remove('blink-text'); 
-            setMode('dig');
+            
+            window.setMode('dig');
 
+            logEvent(analytics, 'level_start', {
+                level_name: 'minesweeper_10x10',
+                difficulty: 'normal'
+            });
+
+            // 보드 생성
             for (let i = 0; i < BOARD_SIZE; i++) {
                 let row = [];
                 for (let j = 0; j < BOARD_SIZE; j++) {
@@ -97,6 +84,7 @@
                 board.push(row);
             }
 
+            // 지뢰 배치
             let minesPlaced = 0;
             while (minesPlaced < MINE_COUNT) {
                 let r = Math.floor(Math.random() * BOARD_SIZE);
@@ -107,6 +95,7 @@
                 }
             }
 
+            // 주변 지뢰 숫자 계산
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     if (!board[r][c].isMine) {
@@ -115,6 +104,13 @@
                 }
             }
             renderBoard();
+        }
+
+        // ✨ 남은 지뢰 숫자 업데이트 함수
+        function updateMineCounter() {
+            const remaining = MINE_COUNT - flagsPlaced;
+            // 숫자가 음수가 되어도 그대로 표시 (사용자가 깃발을 너무 많이 꽂았다는 뜻)
+            mineCounterElement.innerText = remaining < 10 && remaining >= 0 ? `0${remaining}` : remaining;
         }
 
         function countNearbyMines(r, c) {
@@ -131,7 +127,8 @@
         }
 
         function renderBoard() {
-            boardElement.innerHTML = '';
+            boardElement.innerHTML = ''; 
+
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     let cell = document.createElement('div');
@@ -142,7 +139,14 @@
                     cell.addEventListener('contextmenu', (e) => {
                         e.preventDefault(); handleRightClick(r, c);
                     });
-                    cell.addEventListener('mousedown', () => highlightNeighbors(r, c, true));
+                    
+                    cell.addEventListener('mousedown', () => {
+                        if (!board[r][c].revealed) {
+                            highlightNeighbors(r, c, true);
+                        } else if (board[r][c].count > 0) {
+                            highlightNeighbors(r, c, true);
+                        }
+                    });
                     cell.addEventListener('mouseup', () => highlightNeighbors(r, c, false));
                     cell.addEventListener('mouseleave', () => highlightNeighbors(r, c, false));
 
@@ -182,8 +186,154 @@
 
         function toggleFlag(r, c) {
             if (board[r][c].revealed) return;
+            
+            // 깃발 상태 토글
             board[r][c].flagged = !board[r][c].flagged;
+            
+            // ✨ 깃발 개수 계산 및 화면 갱신
+            if (board[r][c].flagged) {
+                flagsPlaced++;
+            } else {
+                flagsPlaced--;
+            }
+            updateMineCounter();
+
             renderBoard();
         }
 
-        function reveal
+        function revealCell(r, c) {
+            if (board[r][c].revealed || board[r][c].flagged) return;
+            board[r][c].revealed = true;
+            if (board[r][c].isMine) {
+                gameOver = true;
+                statusElement.innerText = "GAME OVER! TRY AGAIN.";
+                statusElement.style.color = "var(--retro-accent)";
+                
+                logEvent(analytics, 'level_end', {
+                    level_name: 'minesweeper_10x10',
+                    success: false
+                });
+                
+                revealAllMines();
+            } else {
+                if (board[r][c].count === 0) expandEmptyCells(r, c);
+                checkWin();
+            }
+            renderBoard();
+        }
+
+        function chordReveal(r, c) {
+            let flagCount = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    let nr = r + i; let nc = c + j;
+                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                        if (board[nr][nc].flagged) flagCount++;
+                    }
+                }
+            }
+            if (flagCount === board[r][c].count) {
+                let hitMine = false;
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        let nr = r + i; let nc = c + j;
+                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                            if (!board[nr][nc].revealed && !board[nr][nc].flagged) {
+                                if (board[nr][nc].isMine) hitMine = true;
+                                revealCell(nr, nc); 
+                            }
+                        }
+                    }
+                }
+                if (hitMine) {
+                    gameOver = true;
+                    statusElement.innerText = "GAME OVER! WRONG FLAG.";
+                    statusElement.style.color = "var(--retro-accent)";
+                    
+                    logEvent(analytics, 'level_end', {
+                        level_name: 'minesweeper_10x10',
+                        success: false,
+                        reason: 'wrong_flag'
+                    });
+
+                    revealAllMines();
+                    renderBoard();
+                }
+            } else {
+                highlightNeighbors(r, c, true);
+                setTimeout(() => highlightNeighbors(r, c, false), 150);
+            }
+        }
+
+        function highlightNeighbors(r, c, isActive) {
+            if (gameOver) return;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    let nr = r + i; let nc = c + j;
+                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                        if (!board[nr][nc].revealed && !board[nr][nc].flagged) {
+                            const neighborCell = document.getElementById(`cell-${nr}-${nc}`);
+                            if (neighborCell) {
+                                isActive ? neighborCell.classList.add('pressed') : neighborCell.classList.remove('pressed');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function expandEmptyCells(r, c) {
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    let nr = r + i; let nc = c + j;
+                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                        if (!board[nr][nc].revealed && !board[nr][nc].isMine) {
+                            revealCell(nr, nc);
+                        }
+                    }
+                }
+            }
+        }
+
+        function revealAllMines() {
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c].isMine) board[r][c].revealed = true;
+                }
+            }
+        }
+
+        function checkWin() {
+            if (gameOver) return;
+            let unrevealedSafeCells = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (!board[r][c].isMine && !board[r][c].revealed) unrevealedSafeCells++;
+                }
+            }
+            if (unrevealedSafeCells === 0) {
+                gameOver = true;
+                statusElement.innerText = "MISSION CLEAR! 🎉";
+                statusElement.classList.add('blink-text');
+
+                logEvent(analytics, 'level_end', {
+                    level_name: 'minesweeper_10x10',
+                    success: true
+                });
+
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (board[r][c].isMine && !board[r][c].flagged) {
+                            board[r][c].flagged = true;
+                        }
+                    }
+                }
+                renderBoard();
+            }
+        }
+
+        window.initGame();
+    </script>
+</body>
+</html>
