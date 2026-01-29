@@ -1,0 +1,33 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare public folder
+        run: |
+          mkdir -p public
+          cp 404.html public/404.html
+          cp favicon.svg public/favicon.svg
+          cp firebase-config.js public/firebase-config.js
+          cp index.html public/index.html
+          cp minesweeper.html public/minesweeper.html
+          cp style.css public/style.css
+          cp sfx-click.wav public/sfx-click.wav
+          cp sfx-mine.wav public/sfx-mine.wav
+          cp sfx-start.wav public/sfx-start.wav
+          cp sfx-win.wav public/sfx-win.wav
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MINIGAME_EB7A7 }}
+          projectId: minigame-eb7a7
