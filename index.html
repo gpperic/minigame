@@ -16,7 +16,7 @@
 
     <main>
         <div class="game-grid">
-            <a href="minesweeper.html" class="game-card">
+            <a href="minesweeper.html" class="game-card" id="card-minesweeper">
                 <div class="card-icon">💣</div>
                 <div class="card-content">
                     <div class="card-title">> MINESWEEPER</div>
@@ -47,5 +47,27 @@
         &copy; 2026 FunFern AI Lab. Retro Edition.
     </footer>
 
+    <script type="module">
+        // firebase-config.js 에서 필요한 도구만 가져옵니다.
+        import { getAnalyticsInstance, logEvent } from './firebase-config.js';
+
+        const analytics = await getAnalyticsInstance();
+        // 📊 메인 페이지 방문 기록
+        logEvent(analytics, 'page_view', {
+            page_title: 'Retro AI Lab Home',
+            page_path: '/index.html'
+        });
+
+        // 클릭 이벤트 추적
+        const mineCard = document.getElementById('card-minesweeper');
+        if (mineCard) {
+            mineCard.addEventListener('click', () => {
+                logEvent(analytics, 'select_content', {
+                    content_type: 'game_card',
+                    item_id: 'minesweeper'
+                });
+            });
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - GAME OVER</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body class="game-body body-404">
+
+    <h1 class="error-code glitch-effect">404</h1>
+
+    <div class="error-msg">
+        SYSTEM ERROR.<br>
+        FILE NOT FOUND.<br>
+        <br>
+        <span class="blink">GAME OVER</span>
+    </div>
+
+    <a href="index.html" class="game-btn">INSERT COIN (HOME)</a>
+
+    <script type="module">
+        import { analytics, logEvent } from './firebase-config.js';
+
+        // 📊 [분석] 404 에러 기록
+        logEvent(analytics, 'exception', {
+            description: '404_not_found',
+            fatal: false
+        });
+    </script>
+
+</body>
+</html>
