@@ -46,6 +46,7 @@
     <footer>
         &copy; 2026 FunFern AI Lab. Retro Edition.
     </footer>
+    <div class="version-badge" id="version-badge">__VERSION__</div>
 
     <script type="module">
         // firebase-config.js 에서 필요한 도구만 가져옵니다.
@@ -67,6 +68,12 @@
                     item_id: 'minesweeper'
                 });
             });
+        }
+    </script>
+    <script>
+        const versionBadge = document.getElementById('version-badge');
+        if (versionBadge && versionBadge.textContent === '__VERSION__') {
+            versionBadge.textContent = 'dev';
         }
     </script>
 </body>

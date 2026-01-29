@@ -44,6 +44,14 @@ header h1 {
 }
 header p { font-size: 0.8rem; }
 footer { text-align: center; padding: 30px; margin-top: 50px; font-size: 0.6rem; color: #555; }
+.version-badge {
+    position: fixed; left: 12px; bottom: 12px; z-index: 9998;
+    font-size: 0.5rem; color: var(--retro-text);
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid var(--retro-text);
+    padding: 3px 5px;
+    box-shadow: 2px 2px 0px var(--retro-accent);
+}
 
 /* --- [3. 메인 카드 그리드 (index.html)] --- */
 main { max-width: 900px; margin: 50px auto; padding: 0 20px; }

@@ -13,6 +13,8 @@ jobs:
 
       - name: Prepare public folder
         run: |
+          VERSION="${GITHUB_REF_NAME}"
+          sed -i "s/__VERSION__/${VERSION}/g" index.html
           mkdir -p public
           cp 404.html public/404.html
           cp favicon.svg public/favicon.svg
