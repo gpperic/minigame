@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Snake</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body class="game-body">
+
+    <h1>> NEON SNAKE</h1>
+
+    <div class="info-panel" style="justify-content: center; gap: 20px;">
+        <div class="mine-count">SCORE: <span id="score">0</span></div>
+        <div class="mine-count" style="color: #fff;">HIGH: <span id="high-score">0</span></div>
+    </div>
+
+    <div class="status" id="status">PRESS START TO PLAY</div>
+
+    <div id="snake-board"></div>
+
+    <div class="d-pad">
+        <div class="d-btn d-up" onclick="changeDirection({x: 0, y: -1})">▲</div>
+        <div class="d-btn d-left" onclick="changeDirection({x: -1, y: 0})">◀</div>
+        <div class="d-btn d-down" onclick="changeDirection({x: 0, y: 1})">▼</div>
+        <div class="d-btn d-right" onclick="changeDirection({x: 1, y: 0})">▶</div>
+    </div>
+
+    <button class="game-btn" onclick="startGame()">START GAME</button>
+    <a href="index.html" class="back-link"><< BACK TO MAIN</a>
+
+    <script type="module">
+        import { analytics, logEvent } from './firebase-config.js';
+
+        // --- 게임 설정 변수 ---
+        const GRID_SIZE = 20; // 20x20 격자
+        const SPEED = 150;    // 게임 속도 (낮을수록 빠름)
+        
+        let snake = [];
+        let food = { x: 0, y: 0 };
+        let direction = { x: 0, y: 0 };
+        let nextDirection = { x: 0, y: 0 }; // 빠른 입력 버그 방지용
+        let gameInterval = null;
+        let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let isGameRunning = false;
+
+        // DOM 요소
+        const boardElement = document.getElementById('snake-board');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('high-score');
+        const statusElement = document.getElementById('status');
+
+        // 초기화
+        highScoreElement.innerText = highScore;
+
+        // 전역 함수 등록 (HTML 버튼에서 호출용)
+        window.startGame = function() {
+            if (isGameRunning) return;
+            
+            resetGame();
+            isGameRunning = true;
+            statusElement.innerText = "HUNT THE PIXELS!";
+            statusElement.style.color = "var(--retro-text)";
+            statusElement.classList.remove('blink-text');
+
+            // 📊 게임 시작 분석
+            logEvent(analytics, 'level_start', {
+                level_name: 'snake_classic',
+                difficulty: 'normal'
+            });
+
+            // 게임 루프 시작
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, SPEED);
+        };
+
+        window.changeDirection = function(newDir) {
+            if (!isGameRunning) return;
+            // 반대 방향으로는 전환 불가 (예: 위로 가는데 아래로 못 감)
+            if (newDir.x !== 0 && direction.x !== 0) return;
+            if (newDir.y !== 0 && direction.y !== 0) return;
+            
+            nextDirection = newDir;
+        };
+
+        function resetGame() {
+            snake = [{ x: 10, y: 10 }]; // 뱀 초기 위치 (중앙)
+            direction = { x: 0, y: 0 }; // 처음엔 정지 상태 (또는 바로 움직이게 하려면 {x:1, y:0})
+            nextDirection = { x: 1, y: 0 }; // 오른쪽으로 시작
+            score = 0;
+            updateScore();
+            createBoard();
+            placeFood();
+        }
+
+        function createBoard() {
+            boardElement.innerHTML = '';
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('snake-cell');
+                    cell.id = `cell-${x}-${y}`;
+                    boardElement.appendChild(cell);
+                }
+            }
+            render(); // 첫 화면 그리기
+        }
+
+        function placeFood() {
+            let valid = false;
+            while (!valid) {
+                food.x = Math.floor(Math.random() * GRID_SIZE);
+                food.y = Math.floor(Math.random() * GRID_SIZE);
+                // 뱀 몸통 위에 생기지 않도록 체크
+                valid = !snake.some(segment => segment.x === food.x && segment.y === food.y);
+            }
+        }
+
+        function gameLoop() {
+            direction = nextDirection; // 입력된 방향 적용
+
+            // 1. 머리 위치 계산
+            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+
+            // 2. 충돌 체크 (벽 또는 자기 자신)
+            if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE || 
+                snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                gameOver();
+                return;
+            }
+
+            // 3. 이동 처리 (머리 추가)
+            snake.unshift(head);
+
+            // 4. 먹이 먹기 체크
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                updateScore();
+                placeFood(); // 꼬리 자르지 않음 (길어짐)
+            } else {
+                snake.pop(); // 먹이 안 먹었으면 꼬리 자름 (이동 효과)
+            }
+
+            render();
+        }
+
+        function render() {
+            // 모든 칸 초기화 (비효율적이지만 20x20이라 괜찮음)
+            const cells = document.querySelectorAll('.snake-cell');
+            cells.forEach(c => c.className = 'snake-cell');
+
+            // 먹이 그리기
+            const foodCell = document.getElementById(`cell-${food.x}-${food.y}`);
+            if (foodCell) foodCell.classList.add('snake-food');
+
+            // 뱀 그리기
+            snake.forEach((segment, index) => {
+                const cell = document.getElementById(`cell-${segment.x}-${segment.y}`);
+                if (cell) {
+                    cell.classList.add('snake-body');
+                    if (index === 0) cell.classList.add('snake-head'); // 머리 표시
+                }
+            });
+        }
+
+        function updateScore() {
+            scoreElement.innerText = score;
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.innerText = highScore;
+                localStorage.setItem('snakeHighScore', highScore);
+            }
+        }
+
+        function gameOver() {
+            clearInterval(gameInterval);
+            isGameRunning = false;
+            statusElement.innerText = "GAME OVER!";
+            statusElement.classList.add('blink-text');
+            statusElement.style.color = "var(--retro-accent)";
+
+            // 📊 점수 기록
+            logEvent(analytics, 'post_score', {
+                score: score,
+                character: 'snake',
+                level: 1
+            });
+        }
+
+        // 키보드 컨트롤 (PC용)
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': changeDirection({x: 0, y: -1}); break;
+                case 'ArrowDown': changeDirection({x: 0, y: 1}); break;
+                case 'ArrowLeft': changeDirection({x: -1, y: 0}); break;
+                case 'ArrowRight': changeDirection({x: 1, y: 0}); break;
+            }
+        });
+
+        // 초기 보드 생성 (빈 화면)
+        createBoard();
+
+    </script>
+</body>
+</html>
