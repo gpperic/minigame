@@ -30,16 +30,19 @@
                 </div>
             </a>
 
-            <div class="game-card disabled">
-                <div class="card-icon">🚧</div>
+            <a href="snake.html" class="game-card" id="card-snake">
+                <div class="card-icon">🐍</div>
                 <div class="card-content">
-                    <div class="card-title">> COMING SOON</div>
+                    <div class="card-title">> NEON SNAKE</div>
                     <p class="card-desc">
-                        MORE GAMES<br>UNDER CONSTRUCTION...
+                        EAT PIXELS TO GROW.<br>
+                        DON'T HIT WALLS.<br>
+                        HIGH SCORE CHALLENGE!
                     </p>
-                    <span class="tag">LOADING...</span>
+                    <span class="tag">HTML/JS</span>
+                    <span class="tag">ARCADE</span>
                 </div>
-            </div>
+            </a>
         </div>
     </main>
 
@@ -66,6 +69,15 @@
                 logEvent(analytics, 'select_content', {
                     content_type: 'game_card',
                     item_id: 'minesweeper'
+                });
+            });
+        }
+        const snakeCard = document.getElementById('card-snake');
+        if (snakeCard) {
+            snakeCard.addEventListener('click', () => {
+                logEvent(analytics, 'select_content', {
+                    content_type: 'game_card',
+                    item_id: 'snake'
                 });
             });
         }
