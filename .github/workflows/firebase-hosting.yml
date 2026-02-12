@@ -16,10 +16,10 @@ jobs:
           VERSION="${GITHUB_REF_NAME}"
           sed -i "s/__VERSION__/${VERSION}/g" index.html
           mkdir -p public
-          cp *.html public/
-          cp *.css public/
-          cp *.wav public/
-          cp *.svg public/
+          cp -v *.html public/
+          cp -v *.css public/
+          cp -v *.wav public/
+          cp -v *.svg public/
           cp firebase-config.js public/firebase-config.js
 
       - name: Deploy to Firebase Hosting
