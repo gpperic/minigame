@@ -242,3 +242,51 @@ main { max-width: 900px; margin: 50px auto; padding: 0 20px; }
 .glitch-effect {
     animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
 }
+/* --- [6. 뱀 게임 (SNAKE) 전용 스타일] --- */
+
+/* 뱀 게임판 (20x20 격자) */
+#snake-board {
+    display: grid;
+    grid-template-columns: repeat(20, 15px); /* 칸 크기를 조금 작게 (15px) */
+    grid-template-rows: repeat(20, 15px);
+    gap: 1px;
+    background-color: #111;
+    border: var(--retro-border) solid var(--retro-text);
+    box-shadow: 0 0 15px var(--retro-text);
+    margin: 20px auto;
+}
+
+/* 뱀과 먹이 스타일 */
+.snake-cell { width: 100%; height: 100%; background-color: #222; }
+.snake-body { background-color: var(--retro-text); box-shadow: 0 0 5px var(--retro-text); }
+.snake-head { background-color: #fff; box-shadow: 0 0 8px #fff; } /* 머리는 흰색으로 강조 */
+.snake-food { 
+    background-color: var(--retro-accent); 
+    box-shadow: 0 0 8px var(--retro-accent);
+    border-radius: 50%; /* 먹이는 동그랗게 */
+    animation: blinker 0.5s infinite alternate;
+}
+
+/* 모바일용 D-Pad (방향키) */
+.d-pad {
+    display: grid;
+    grid-template-columns: 60px 60px 60px;
+    grid-template-rows: 50px 50px;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+.d-btn {
+    background-color: #222;
+    border: 2px solid var(--retro-text);
+    color: var(--retro-text);
+    font-size: 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border-radius: 5px;
+    user-select: none;
+}
+.d-btn:active { background-color: var(--retro-text); color: #000; }
+.d-up { grid-column: 2; grid-row: 1; }
+.d-left { grid-column: 1; grid-row: 2; }
+.d-down { grid-column: 2; grid-row: 2; }
+.d-right { grid-column: 3; grid-row: 2; }
