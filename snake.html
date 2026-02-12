@@ -32,6 +32,7 @@
 
     <script type="module">
         import { getAnalyticsInstance, logEvent } from './firebase-config.js';
+        const analytics = await getAnalyticsInstance();
 
         // --- 게임 설정 변수 ---
         const GRID_SIZE = 20; // 20x20 격자
@@ -66,7 +67,7 @@
             statusElement.classList.remove('blink-text');
 
             // 📊 게임 시작 분석
-            logEvent(getAnalyticsInstance, 'level_start', {
+            logEvent(analytics, 'level_start', {
                 level_name: 'snake_classic',
                 difficulty: 'normal'
             });
@@ -182,7 +183,7 @@
             statusElement.style.color = "var(--retro-accent)";
 
             // 📊 점수 기록
-            logEvent(getAnalyticsInstance, 'post_score', {
+            logEvent(analytics, 'post_score', {
                 score: score,
                 character: 'snake',
                 level: 1
